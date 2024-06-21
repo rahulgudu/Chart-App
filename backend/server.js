@@ -8,11 +8,14 @@ const app = express();
 dotenv.config()
 const PORT = process.env.PORT;
 
-app.get("/", (req, res) => {
-  res.send("<h1>App is healthy</h1>");
-});
-
+// middlewares
+app.use(express.json());
 app.use("/api/auth", authRoutes)
+
+
+// app.get("/", (req, res) => {
+//     res.send("<h1>App is healthy</h1>");
+//   });
 
 app.listen(PORT, () => {
     connectToMongoDB();
