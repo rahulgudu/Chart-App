@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import GenderCheckBox from "./GenderCheckBox";
 import { useState } from "react";
 import useSignup from "../../hooks/useSignup";
+import { useAuthContext } from "../../context/AuthContext";
 
 const Signup = () => {
+  const {loading} = useAuthContext();
   const [inputs, setInputs] = useState({
     fullName: "",
     username: "",
@@ -99,7 +101,7 @@ const Signup = () => {
 
           <div>
             <button type="submit" className="btn btn-block btn-sm mt-2 border border-slate-700 btn-outline btn-secondary">
-              Sign Up
+              {loading ? <span className="loading loading-spinner"></span> : "Sign Up"}
             </button>
           </div>
         </form>
