@@ -33,7 +33,7 @@ const SearchInput = () => {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
-      <button type="submit" className="btn btn-circle bg-purple-500 text-white">
+      <button type="submit" className="btn btn-circle bg-green-500 text-white">
         <AiOutlineSearch />
       </button>
     </form>
