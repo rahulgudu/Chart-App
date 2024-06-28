@@ -1,5 +1,6 @@
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
+import { getReceiverSocketId, io } from "../socket/socket.js";
 
 export const sendMessage = async (req, res) => {
   try {
@@ -31,13 +32,19 @@ export const sendMessage = async (req, res) => {
 
     await conversation.save(); // because we have updated the collection
 
+    // Socket Io Functionality
+    const receiverSocketId = getReceiverSocketId(receiverId);
+    if (receiverSocketId) {
+      // io.to(socket_id).emit() used to send events to specific client
+      io.to(receiverSocketId).emit("newMessage", newMessage);
+    }
+
     return res.status(200).json(newMessage);
   } catch (error) {
     console.log("Error in sending messages", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 
 export const getMessages = async (req, res) => {
   try {
@@ -65,4 +72,3 @@ export const getMessages = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
