@@ -2,6 +2,6 @@ import { Text, View } from "react-native";
 
 export default function Home() {
     return <View>
-        <Text>Home Page</Text>
+        <Text className="text-red-500">Home Page</Text>
     </View>
 }
