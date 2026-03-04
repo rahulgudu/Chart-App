@@ -45,7 +45,15 @@
           }
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "chat-app",
+          "organization": "rahul-7v"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
