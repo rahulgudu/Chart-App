@@ -1,13 +1,21 @@
 import { useAuth } from "@clerk/clerk-expo";
-import { Redirect } from "expo-router";
-import { Text, View } from "react-native";
+import { Link, Redirect } from "expo-router";
+import { Pressable, Text, View } from "react-native";
 
 export default function Home() {
-    const { isSignedIn } = useAuth();
-    if (!isSignedIn) {
-        return <Redirect href={"/(auth)"} />
-    }
-    return <View>
-        <Text className="text-red-500 text-4xl">Home Page</Text>
+  const { isSignedIn, isLoaded, signOut } = useAuth();
+  if (!isLoaded) return null;
+  if (!isSignedIn) {
+    return <Redirect href={"/(auth)"} />;
+  }
+  return (
+    <View>
+      <Text className="text-red-500 text-4xl">Home Page</Text>
+      <Link href={"/home"}>Home</Link>
+
+      <Pressable onPress={() => signOut()}>
+        <Text>Signout</Text>
+      </Pressable>
     </View>
+  );
 }
