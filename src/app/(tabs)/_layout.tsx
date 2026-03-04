@@ -13,7 +13,7 @@ const TabsLayout = () => {
                 <Icon sf="safari" drawable="explore" />
             </NativeTabs.Trigger>
             <NativeTabs.Trigger name="profile">
-                <Label>Explore</Label>
+                <Label>Profile</Label>
                 <Icon sf="safari" drawable="explore" />
             </NativeTabs.Trigger>
         </NativeTabs>
