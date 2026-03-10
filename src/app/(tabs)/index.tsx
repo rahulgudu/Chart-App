@@ -81,7 +81,8 @@ const ChatsScreen = () => {
         channelRenderFilterFn={channelRenderFilterFn}
         onSelect={(channel) => {
           setChannel(channel);
-          //router.push("/");
+
+          router.push(`/channel/${channel.id}`);
         }}
         additionalFlatListProps={{
           contentContainerStyle: { flexGrow: 1 },
