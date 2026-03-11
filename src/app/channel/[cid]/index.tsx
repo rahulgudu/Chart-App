@@ -1,45 +1,42 @@
-import { View, Text, TouchableOpacity } from "react-native";
-import React, { useLayoutEffect } from "react";
-import { useAppContext } from "@/src/contexts/AppProvider";
-import {
-  Channel,
-  MessageInput,
-  MessageList,
-  useChatContext,
-} from "stream-chat-expo";
-import { useNavigation, useRouter } from "expo-router";
-import { useHeaderHeight } from "@react-navigation/elements";
-import { FullScreenLoader } from "@/src/components/FullScreenLoader";
+
 import { EmptyState } from "@/src/components/EmptyState";
+import { FullScreenLoader } from "@/src/components/FullScreenLoader";
+import { useAppContext } from "@/src/contexts/AppProvider";
 import { COLORS } from "@/src/lib/theme";
 import { Ionicons } from "@expo/vector-icons";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { Image } from "expo-image";
+import { useNavigation, useRouter } from "expo-router";
+import { useLayoutEffect } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
+import { Channel, MessageInput, MessageList, useChatContext } from "stream-chat-expo";
 
 const ChannelScreen = () => {
   const { channel, setThread } = useAppContext();
+
   const { client } = useChatContext();
 
   const router = useRouter();
   const navigation = useNavigation();
 
-  const headerHight = useHeaderHeight();
+  const headerHeight = useHeaderHeight();
+  const keyboardOffset = Math.max(headerHeight - 250, 0);
 
   let displayName = "";
   let avatarUrl = "";
 
   if (channel) {
     const members = Object.values(channel.state.members);
-    const otherMembers = members.find(
-      (member) => member.user_id !== client.userID,
-    );
-
-    displayName = otherMembers?.user?.name!;
-    avatarUrl = otherMembers?.user?.image || "";
+    const otherMember = members.find((member) => member.user_id !== client.userID);
+    displayName = otherMember?.user?.name!;
+    avatarUrl = otherMember?.user?.image || "";
   }
 
-  // useLayoutEffect vs useEffect
-  // useLayout (sync) runs before the screen is painted, useEffect (async) runs after the screen is painted
-  // so if we want to avoid flickering, we should use useLayoutEffect
+  // ? useLayoutEffect vs useEffect
+  // - useLayoutEffect runs before the screen has been painted (sync)
+  // - useEffect runs after the screen has been painted (async)
+  // so here if you use a useEffect, there will be a flicker effect when the screen is mounted
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: true,
@@ -47,25 +44,17 @@ const ChannelScreen = () => {
         backgroundColor: COLORS.surface,
       },
       headerTintColor: COLORS.text,
-      headerLeft: () => {
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="ml-2 flex-row items-center"
-        >
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => router.back()} className="ml-2 flex-row items-center">
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
-        </TouchableOpacity>;
-      },
+        </TouchableOpacity>
+      ),
       headerTitle: () => (
         <View className="flex-row items-center">
           {avatarUrl ? (
             <Image
               source={avatarUrl}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                marginRight: 10,
-              }}
+              style={{ width: 32, height: 32, borderRadius: 16, marginRight: 10 }}
             />
           ) : (
             <View
@@ -83,36 +72,41 @@ const ChannelScreen = () => {
       headerRight: () => (
         <TouchableOpacity
           onPress={() => {
-            // TODO: Implement video call functionality
+            // router.push({
+            //   pathname: "/call/[callId]",
+            //   params: { callId: channel?.id! },
+            // });
           }}
         >
           <Ionicons name="videocam-outline" size={24} color={COLORS.primary} />
         </TouchableOpacity>
       ),
     });
-  }, [displayName, navigation, router, avatarUrl, channel?.cid, channel?.id]);
+  }, [navigation, displayName, avatarUrl, channel?.cid, channel?.id, router]);
 
-  if (!channel) return <FullScreenLoader message="Loading messages...." />;
+  if (!channel) return <FullScreenLoader message="Loading study room..." />;
+
   return (
     <View className="flex-1 bg-border">
       <Channel
         channel={channel}
-        keyboardVerticalOffset={headerHight}
+        keyboardVerticalOffset={keyboardOffset}
         EmptyStateIndicator={() => (
           <EmptyState
             icon="book-outline"
             title="No messages yet"
-            subtitle="Start a conversation"
+            subtitle="Start a study conversation!"
           />
         )}
       >
         <MessageList
-          onThreadSelect={(thread) =>
-            router.push(`/channel/${channel.cid}/thread/${thread?.cid}`)
-          }
+          onThreadSelect={(thread) => {
+            setThread(thread);
+            router.push(`/channel/${channel.cid}/thread/${thread?.cid}`);
+          }}
         />
 
-        <View className="pb-5 bg-surface">
+        <View className="pb-4 bg-surface">
           <MessageInput />
         </View>
       </Channel>
