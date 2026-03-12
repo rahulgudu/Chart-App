@@ -107,7 +107,7 @@ const ChannelScreen = () => {
         />
 
         <View className="pb-4 bg-surface">
-          <MessageInput />
+          <MessageInput audioRecordingEnabled />
         </View>
       </Channel>
     </View>

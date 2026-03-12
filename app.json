@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rahulgudu.ChartApp"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +21,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.rahulgudu.ChartApp"
+      "package": "com.rahulgudu.ChartApp",
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "output": "server",
@@ -28,10 +30,18 @@
       "bundler": "metro"
     },
     "plugins": [
+      "expo-router",
       [
-        "expo-router",
+        "expo-image-picker",
         {
-          "root": "./src/app"
+          "cameraPermission": "$(PRODUCT_NAME) would like to use your camera to share image in a message.",
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "$(PRODUCT_NAME) would like to use your microphone for voice recording."
         }
       ],
       [
@@ -54,7 +64,8 @@
           "project": "chat-app",
           "organization": "rahul-7v"
         }
-      ]
+      ],
+      "expo-audio"
     ],
     "experiments": {
       "typedRoutes": true,
