@@ -1,3 +1,4 @@
+
 import ExploreUserCard from "@/src/components/ExploreUserCard";
 import ListEmptyComponent from "@/src/components/ListEmptyComponent";
 import { useAppContext } from "@/src/contexts/AppProvider";
@@ -7,14 +8,7 @@ import { COLORS } from "@/src/lib/theme";
 import { useUser } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { UserResponse } from "stream-chat";
 import { useChatContext } from "stream-chat-expo";
@@ -30,12 +24,7 @@ const ExploreScreen = () => {
 
   const { loading, users } = useStreamUsers(client, userId);
 
-  const { handleStartChat } = useStartChat({
-    client,
-    userId,
-    setChannel,
-    setCreating,
-  });
+  const { handleStartChat } = useStartChat({ client, userId, setChannel, setCreating });
 
   const filteredUsers = !search.trim()
     ? users
@@ -46,11 +35,7 @@ const ExploreScreen = () => {
       );
 
   const renderUserItem = ({ item }: { item: UserResponse }) => (
-    <ExploreUserCard
-      item={item}
-      creating={creating}
-      onStartChat={handleStartChat}
-    />
+    <ExploreUserCard item={item} creating={creating} onStartChat={handleStartChat} />
   );
 
   return (
@@ -58,9 +43,7 @@ const ExploreScreen = () => {
       {/* Header */}
       <View className="px-5 pt-3 pb-1">
         <Text className="text-[28px] font-bold text-foreground">Explore</Text>
-        <Text className="text-sm text-foreground-muted mt-1">
-          Find people and start chatting
-        </Text>
+        <Text className="text-sm text-foreground-muted mt-1">Find people and start chatting</Text>
       </View>
 
       {/* Search bar */}
