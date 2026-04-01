@@ -1,4 +1,3 @@
-
 import { EmptyState } from "@/src/components/EmptyState";
 import { FullScreenLoader } from "@/src/components/FullScreenLoader";
 import { useAppContext } from "@/src/contexts/AppProvider";
@@ -9,9 +8,17 @@ import { Image } from "expo-image";
 import { useNavigation, useRouter } from "expo-router";
 import { useLayoutEffect } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { Channel, MessageInput, MessageList, useChatContext } from "stream-chat-expo";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  Channel,
+  MessageInput,
+  MessageList,
+  useChatContext,
+} from "stream-chat-expo";
 
 const ChannelScreen = () => {
+  const insets = useSafeAreaInsets();
+  const paddingBottom = insets.bottom > 0 ? insets.bottom : 16;
   const { channel, setThread } = useAppContext();
 
   const { client } = useChatContext();
@@ -27,7 +34,9 @@ const ChannelScreen = () => {
 
   if (channel) {
     const members = Object.values(channel.state.members);
-    const otherMember = members.find((member) => member.user_id !== client.userID);
+    const otherMember = members.find(
+      (member) => member.user_id !== client.userID,
+    );
     displayName = otherMember?.user?.name!;
     avatarUrl = otherMember?.user?.image || "";
   }
@@ -45,7 +54,9 @@ const ChannelScreen = () => {
       },
       headerTintColor: COLORS.text,
       headerLeft: () => (
-        <TouchableOpacity onPress={() => router.back()} className="ml-2 flex-row items-center">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="ml-2 flex-row items-center">
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
       ),
@@ -54,13 +65,17 @@ const ChannelScreen = () => {
           {avatarUrl ? (
             <Image
               source={avatarUrl}
-              style={{ width: 32, height: 32, borderRadius: 16, marginRight: 10 }}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                marginRight: 10,
+              }}
             />
           ) : (
             <View
               className="mr-2.5 h-8 w-8 items-center justify-center rounded-full"
-              style={{ backgroundColor: COLORS.primary }}
-            >
+              style={{ backgroundColor: COLORS.primary }}>
               <Text className="text-base font-semibold text-foreground">
                 {displayName.charAt(0).toUpperCase()}
               </Text>
@@ -74,10 +89,9 @@ const ChannelScreen = () => {
           onPress={() => {
             router.push({
               pathname: "/call/[callId]",
-              params: {callId: channel?.id!}
-            })
-          }}
-        >
+              params: { callId: channel?.id! },
+            });
+          }}>
           <Ionicons name="videocam-outline" size={24} color={COLORS.primary} />
         </TouchableOpacity>
       ),
@@ -97,8 +111,7 @@ const ChannelScreen = () => {
             title="No messages yet"
             subtitle="Start a study conversation!"
           />
-        )}
-      >
+        )}>
         <MessageList
           onThreadSelect={(thread) => {
             setThread(thread);
@@ -106,7 +119,7 @@ const ChannelScreen = () => {
           }}
         />
 
-        <View className="pb-4 bg-surface">
+        <View style={{ paddingBottom }} className=" bg-surface">
           <MessageInput audioRecordingEnabled />
         </View>
       </Channel>
