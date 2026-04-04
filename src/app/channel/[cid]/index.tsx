@@ -1,4 +1,3 @@
-import { EmptyState } from "@/src/components/EmptyState";
 import { FullScreenLoader } from "@/src/components/FullScreenLoader";
 import { useAppContext } from "@/src/contexts/AppProvider";
 import { COLORS } from "@/src/lib/theme";
@@ -7,7 +6,13 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { Image } from "expo-image";
 import { useNavigation, useRouter } from "expo-router";
 import { useLayoutEffect } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Channel,
@@ -18,45 +23,33 @@ import {
 
 const ChannelScreen = () => {
   const insets = useSafeAreaInsets();
-  const paddingBottom = insets.bottom > 0 ? insets.bottom : 16;
   const { channel, setThread } = useAppContext();
-
   const { client } = useChatContext();
-
   const router = useRouter();
   const navigation = useNavigation();
-
   const headerHeight = useHeaderHeight();
-  const keyboardOffset = Math.max(headerHeight - 250, 0);
+
+  // For Samsung/Android, we often need a slight positive offset
+  // to account for the system nav bar being pushed up.
+  const keyboardOffset = Platform.OS === "ios" ? headerHeight : 30;
 
   let displayName = "";
   let avatarUrl = "";
 
   if (channel) {
     const members = Object.values(channel.state.members);
-    const otherMember = members.find(
-      (member) => member.user_id !== client.userID,
-    );
-    displayName = otherMember?.user?.name!;
+    const otherMember = members.find((m) => m.user_id !== client.userID);
+    displayName = otherMember?.user?.name || "User";
     avatarUrl = otherMember?.user?.image || "";
   }
-
-  // ? useLayoutEffect vs useEffect
-  // - useLayoutEffect runs before the screen has been painted (sync)
-  // - useEffect runs after the screen has been painted (async)
-  // so here if you use a useEffect, there will be a flicker effect when the screen is mounted
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: true,
-      headerStyle: {
-        backgroundColor: COLORS.surface,
-      },
+      headerStyle: { backgroundColor: COLORS.surface },
       headerTintColor: COLORS.text,
       headerLeft: () => (
-        <TouchableOpacity
-          onPress={() => router.back()}
-          className="ml-2 flex-row items-center">
+        <TouchableOpacity onPress={() => router.back()} className="ml-2">
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
       ),
@@ -76,7 +69,7 @@ const ChannelScreen = () => {
             <View
               className="mr-2.5 h-8 w-8 items-center justify-center rounded-full"
               style={{ backgroundColor: COLORS.primary }}>
-              <Text className="text-base font-semibold text-foreground">
+              <Text className="text-white">
                 {displayName.charAt(0).toUpperCase()}
               </Text>
             </View>
@@ -86,42 +79,49 @@ const ChannelScreen = () => {
       ),
       headerRight: () => (
         <TouchableOpacity
-          onPress={() => {
+          className="mr-4"
+          onPress={() =>
             router.push({
               pathname: "/call/[callId]",
               params: { callId: channel?.id! },
-            });
-          }}>
+            })
+          }>
           <Ionicons name="videocam-outline" size={24} color={COLORS.primary} />
         </TouchableOpacity>
       ),
     });
-  }, [navigation, displayName, avatarUrl, channel?.cid, channel?.id, router]);
+  }, [navigation, displayName, avatarUrl, channel?.id, router]);
 
-  if (!channel) return <FullScreenLoader message="Loading study room..." />;
+  if (!channel) return <FullScreenLoader message="Loading..." />;
 
   return (
-    <View className="flex-1 bg-border">
-      <Channel
-        channel={channel}
-        keyboardVerticalOffset={keyboardOffset}
-        EmptyStateIndicator={() => (
-          <EmptyState
-            icon="book-outline"
-            title="No messages yet"
-            subtitle="Start a study conversation!"
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <Channel channel={channel} keyboardVerticalOffset={keyboardOffset}>
+        <View style={{ flex: 1 }}>
+          <MessageList
+            onThreadSelect={(thread) => {
+              setThread(thread);
+              router.push(`/channel/${channel.cid}/thread/${thread?.cid}`);
+            }}
           />
-        )}>
-        <MessageList
-          onThreadSelect={(thread) => {
-            setThread(thread);
-            router.push(`/channel/${channel.cid}/thread/${thread?.cid}`);
-          }}
-        />
-
-        <View style={{ paddingBottom }} className=" bg-surface">
-          <MessageInput audioRecordingEnabled />
         </View>
+
+        {/* Using KeyboardAvoidingView manually is often more reliable 
+          for Samsung devices than Stream's internal logic.
+        */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={keyboardOffset}>
+          <View
+            style={{
+              paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
+              backgroundColor: COLORS.surface,
+              borderTopWidth: 1,
+              borderTopColor: COLORS.border,
+            }}>
+            <MessageInput audioRecordingEnabled />
+          </View>
+        </KeyboardAvoidingView>
       </Channel>
     </View>
   );
