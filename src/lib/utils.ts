@@ -1,0 +1,8 @@
+export function getGreetingForHour(date: Date = new Date()): string {
+    const hour = date.getHours();
+
+    if (hour < 12) return "Good Morining";
+    if (hour < 17) return "Good Afternoon";
+
+    return "Good Evening";
+}
