@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { View, Text, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, ActivityIndicator, StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -29,11 +29,10 @@ const CallScreen = () => {
   useEffect(() => {
     if (!videoClient || !callId) return;
 
-    const startcall = async () => {
+    const startCall = async () => {
       try {
-        // find chanel  by ID to find its memebers
+        // Find channel by ID to find its members
         const channel = chatClient.channel("messaging", callId);
-
         await channel.watch();
 
         const _call = videoClient.call("default", callId);
@@ -54,30 +53,30 @@ const CallScreen = () => {
 
         setCall(_call);
       } catch (error) {
-        console.error("Failed to start call: ", error);
+        console.error("Failed to start call:", error);
         setError("Failed to start call. Please try again.");
       }
     };
 
-    startcall();
-  }, []);
+    startCall();
+
+    // Cleanup function
+    return () => {
+      if (call) {
+        call.leave().catch((err) => console.error("Failed to leave call:", err));
+        setCall(null);
+      }
+    };
+  }, [videoClient, callId]);
 
   if (error) {
     return <ErrorCallUI error={error} />;
   }
 
   if (!call) {
-    return (
-      <SafeAreaView className="flex-1 bg-background">
-        <View className="flex-1 items-center justify-center gap-4">
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text className="mt-2 text-base text-foreground-muted">
-            Starting call...
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <LoadingCallScreen message="Starting call..." />;
   }
+
   return (
     <StreamCall call={call}>
       <CallUI />
@@ -89,53 +88,115 @@ function CallUI() {
   const call = useCall();
   const router = useRouter();
   const { useCallCallingState } = useCallStateHooks();
-
   const callingState = useCallCallingState();
-
   const isCallCreatedByMe = call?.isCreatedByMe ?? false;
 
   useEffect(() => {
-    if (callingState === CallingState.LEFT) router.back();
-  }, [callingState, router, call]);
+    if (callingState === CallingState.LEFT) {
+      router.back();
+    }
+  }, [callingState, router]);
 
-  // show ringing ui for ringing joining and IDLE states
-  if (
-    [CallingState.RINGING, CallingState.JOINING, CallingState.IDLE].includes(
-      callingState,
-    )
-  ) {
-    return (
-      <SafeAreaView>
-        {isCallCreatedByMe ? <OutgoingCall  /> : <IncomingCall />}
-      </SafeAreaView>
-    );
+  switch (callingState) {
+    case CallingState.UNKNOWN:
+    case CallingState.IDLE:
+      return <LoadingCallScreen message="Preparing call..." />;
+
+    case CallingState.RINGING:
+      return (
+        <SafeAreaView style={styles.container}>
+          {isCallCreatedByMe ? <OutgoingCall /> : <IncomingCall />}
+        </SafeAreaView>
+      );
+
+    case CallingState.JOINING:
+      return <LoadingCallScreen message="Joining call..." />;
+
+    case CallingState.JOINED:
+      return (
+        <SafeAreaView style={styles.container}>
+          <CallContent
+            onHangupCallHandler={async (err) => {
+              if (err) {
+                console.error("Error hanging up:", err);
+              }
+              try {
+                await call?.leave();
+              } catch (error) {
+                console.error("Failed to leave call:", error);
+              }
+            }}
+            layout="spotlight"
+          />
+        </SafeAreaView>
+      );
+
+    case CallingState.LEFT:
+      return null;
+
+    case CallingState.RECONNECTING:
+    case CallingState.MIGRATING:
+      return <ReconnectingCallScreen />;
+
+    case CallingState.RECONNECTING_FAILED:
+      return (
+        <ErrorCallUI error="Connection lost. Unable to reconnect. Please check your network and try again." />
+      );
+
+    case CallingState.OFFLINE:
+      return (
+        <ErrorCallUI error="No internet connection. Please check your network and try again." />
+      );
+
+    default:
+      const exhaustiveCheck: never = callingState;
+      throw new Error(`Unknown calling state: ${exhaustiveCheck}`);
   }
+}
 
+function LoadingCallScreen({ message }: { message: string }) {
   return (
-    <SafeAreaView>
-      <CallContent
-        onHangupCallHandler={async () => {
-          await call?.endCall();
-        }}
-        layout="spotlight"
-      />
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="flex-1 items-center justify-center gap-4">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text className="mt-2 text-base text-foreground-muted">{message}</Text>
+      </View>
     </SafeAreaView>
   );
 }
 
-export default CallScreen;
+function ReconnectingCallScreen() {
+  return (
+    <SafeAreaView className="flex-1 bg-background">
+      <View className="flex-1 items-center justify-center gap-4">
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Ionicons name="cloud-offline-outline" size={48} color={COLORS.primary} />
+        <Text className="mt-2 text-base text-foreground">Reconnecting...</Text>
+        <Text className="text-sm text-foreground-muted">
+          Please wait while we restore your connection
+        </Text>
+      </View>
+    </SafeAreaView>
+  );
+}
 
 function ErrorCallUI({ error }: { error: string }) {
   const router = useRouter();
   return (
     <SafeAreaView className="flex-1 bg-background">
-      <View className="flex-1 items-center justify-center gap-4">
-        <Ionicons name="alert-circle-outline" size={48} color={COLORS.danger} />
-        <Text className="mt-2 text-base text-foreground">{error}</Text>
+      <View className="flex-1 items-center justify-center gap-4 px-6">
+        <Ionicons name="alert-circle-outline" size={64} color={COLORS.danger} />
+        <Text className="mt-4 text-center text-lg font-semibold text-foreground">
+          Call Failed
+        </Text>
+        <Text className="text-center text-base text-foreground-muted">
+          {error}
+        </Text>
         <Pressable
-          className="mt-4 rounded-xl bg-primary px-6 py-3"
-          onPress={() => router.back()}>
-          <Text className="text-[15px] font-semibold text-foreground">
+          className="mt-6 rounded-xl bg-primary px-8 py-4"
+          onPress={() => router.back()}
+        >
+          <Text className="text-[16px] font-semibold text-foreground">
             Go Back
           </Text>
         </Pressable>
@@ -143,3 +204,11 @@ function ErrorCallUI({ error }: { error: string }) {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
+
+export default CallScreen;
